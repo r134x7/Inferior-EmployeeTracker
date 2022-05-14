@@ -31,5 +31,4 @@ CREATE TABLE employee (
     ON DELETE SET NULL,
     FOREIGN KEY (manager_id)
     REFERENCES employee(id)
-    ON DELETE SET NULL
 );

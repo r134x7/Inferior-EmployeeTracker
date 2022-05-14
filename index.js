@@ -28,3 +28,6 @@ const db = mysql.createConnection(
 // view employees by department, this probably uses...
 // delete departments etc should be simple
 // view combined salaries of all employees in a department would use SUM()
+
+// view all roles needs to join department name to the role table, remove department id
+// view all employees needs to join both role name, salary and department name, no role id, no manager id, it needs to show manager name
