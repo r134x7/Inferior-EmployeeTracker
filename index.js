@@ -9,10 +9,22 @@ const con = mysql.createConnection(
         password: 'Greenbatteriesonahorse584#',
         database: 'company_db'
     },
-    console.log(`Connected to the company_db database.`)
+    console.log(`
+    INFERIOR
+    EMPLOYEE
+    TRACKER
+    `)
     );
         
-  const questions = ["Select an option.", "Name of department you want to add.", "Name of role you want to add.", "Set salary for added role", "Assign role to which department?", "What is the employee's first name?", "What is the employee's last name?", "Assign which role?", "Assign which manager?"];
+  const questions = ["Select an option.", 
+  "Name of department you want to add.", 
+  "Name of role you want to add.", 
+  "Set salary for added role", 
+  "Assign role to which department?", 
+  "What is the employee's first name?", 
+  "What is the employee's last name?", 
+  "Assign which role?", 
+  "Assign which manager?"];
 
 function select() {
     
@@ -68,7 +80,7 @@ function select() {
         } else if (data.optionSelect === "Add Department"){
             addDepartment();
         } else if (data.optionSelect === "Add Role"){
-            
+            addRole();
         } else if (data.optionSelect === "Add Employee"){
             
         } else {
@@ -83,7 +95,6 @@ function select() {
 }
 
 function addDepartment() {
-
     inquirer
     .prompt([
         {
@@ -103,33 +114,46 @@ function addDepartment() {
 }
 
 function addRole() {
+
+con.query(`SELECT __name__ AS department FROM department`, 
+function (err, results) {
+    var x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+
+    return questionRole(x);
+});    
+
+function questionRole(departments) {
+    
     inquirer
     .prompt([
         {
             type: "input",
             name: "addRole",
-            message: questions[1],
+            message: questions[2],
         },
         {
             type: "input",
             name: "addSalary",
-            message: questions[2],
+            message: questions[3],
         },
         {
-            type: "List",
+            type: "list",
             name: "assignDepartment",
-            message: questions[3],
-            choices: [] // have to figure out how to get the departments...
+            message: questions[4],
+            choices: departments 
         },
     ])
     .then(function (data) {
         // db.query(`INSERT INTO department (__name__)
         // VALUES (?);`, data, (err, results) => console.log(results));
-        con.promise().query(`INSERT INTO department (__name__)
-            VALUES (?);`, data.addDepartment)
+        console.log(departments);
+        console.log(Number(data.addSalary));
+        con.promise().query(`INSERT INTO __role__ (title, salary, department_id)
+            VALUES (?, ?, ?);`, data.addRole, Number(data.addSalary), data.assignDepartment)
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
+  }
 }
 
 function addEmployee() {
