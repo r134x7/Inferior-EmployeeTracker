@@ -93,8 +93,12 @@ function addDepartment() {
         },
     ])
     .then(function (data) {
-        db.query(`INSERT INTO department (__name__)
-        VALUES (?);`, data, (err, results) => console.log(results));
+        // db.query(`INSERT INTO department (__name__)
+        // VALUES (?);`, data, (err, results) => console.log(results));
+        con.promise().query(`INSERT INTO department (__name__)
+            VALUES (?);`, data.addDepartment)
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
 }
 
