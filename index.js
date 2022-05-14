@@ -12,7 +12,7 @@ const con = mysql.createConnection(
     console.log(`Connected to the company_db database.`)
     );
         
-  const questions = ["Select an option.", "Name of department you want to add."];
+  const questions = ["Select an option.", "Name of department you want to add.", "Name of role you want to add.", "Set salary for added role", "Assign role to which department?", "What is the employee's first name?", "What is the employee's last name?", "Assign which role?", "Assign which manager?"];
 
 function select() {
     
@@ -102,7 +102,71 @@ function addDepartment() {
     })
 }
 
+function addRole() {
+    inquirer
+    .prompt([
+        {
+            type: "input",
+            name: "addRole",
+            message: questions[1],
+        },
+        {
+            type: "input",
+            name: "addSalary",
+            message: questions[2],
+        },
+        {
+            type: "List",
+            name: "assignDepartment",
+            message: questions[3],
+            choices: [] // have to figure out how to get the departments...
+        },
+    ])
+    .then(function (data) {
+        // db.query(`INSERT INTO department (__name__)
+        // VALUES (?);`, data, (err, results) => console.log(results));
+        con.promise().query(`INSERT INTO department (__name__)
+            VALUES (?);`, data.addDepartment)
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+    })
+}
 
+function addEmployee() {
+    inquirer
+    .prompt([
+        {
+            type: "input",
+            name: "firstName",
+            message: questions[5],
+        },
+        {
+            type: "input",
+            name: "lastName",
+            message: questions[6],
+        },
+        {
+            type: "List",
+            name: "assignRole",
+            message: questions[7],
+            choices: [] // have to figure out how to get the roles...
+        },
+        {
+            type: "List",
+            name: "assignRole",
+            message: questions[8],
+            choices: [] // have to figure out how to get the managers...
+        },
+    ])
+    .then(function (data) {
+        // db.query(`INSERT INTO department (__name__)
+        // VALUES (?);`, data, (err, results) => console.log(results));
+        con.promise().query(`INSERT INTO department (__name__)
+            VALUES (?);`, data.addDepartment)
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+    })
+}
 
 select();
 
