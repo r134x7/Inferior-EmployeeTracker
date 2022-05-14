@@ -2,17 +2,17 @@ const mysql = require("mysql2");
 const table = require("console.table");
 const inquirer = require("inquirer");
 
-const db = mysql.createConnection(
+const con = mysql.createConnection(
     {
-      host: 'localhost',
-      user: 'root',
-      password: 'Greenbatteriesonahorse584#',
-      database: 'company_db'
+        host: 'localhost',
+        user: 'root',
+        password: 'Greenbatteriesonahorse584#',
+        database: 'company_db'
     },
     console.log(`Connected to the company_db database.`)
-  );
-
-  const questions = ["Select an option.",];
+    );
+        
+  const questions = ["Select an option.", "Name of department you want to add."];
 
 function select() {
     
@@ -28,20 +28,45 @@ function select() {
     .then(function (data) {
         
         if (data.optionSelect === "View All Departments"){
-            db.query("SELECT id, __name__ AS department FROM department", (err, results) => console.log(table.getTable(results)));
+            // await db.query("SELECT id, __name__ AS department FROM department")
+            // db.query("SELECT id, __name__ AS department FROM department").then((err, results) => console.log(table.getTable(results))).then(select());
+            // const main = await db.query("SELECT id, __name__ AS department FROM department")
+            // console.log(table.getTable(main));
+            // select(); 
+            // con
+            con.promise().query("SELECT id, __name__ AS department FROM department").then(
+                ([results]) => console.log(table.getTable(results)))
+                .catch(console.log())
+                .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+            // () => select();
             // select();
         } else if (data.optionSelect === "View All Roles"){
-            db.query(`SELECT __role__.id, __role__.title, department.__name__ AS department, __role__.salary  
-            FROM department
-            JOIN __role__
-            ON __role__.department_id = department.id;`, (err, results) => console.log(table.getTable(results)));
+            // db.query(`SELECT __role__.id, __role__.title, department.__name__ AS department, __role__.salary  
+            // FROM department
+            // JOIN __role__
+            // ON __role__.department_id = department.id;`, (err, results) => console.log(table.getTable(results)));
+            // con
+            con.promise().query(`SELECT __role__.id, __role__.title, department.__name__ AS department, __role__.salary  
+             FROM department
+             JOIN __role__
+             ON __role__.department_id = department.id;`).then(
+                ([results]) => console.log(table.getTable(results)))
+                .catch(console.log())
+                .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
         } else if (data.optionSelect === "View All Employees"){
-            db.query(`SELECT employee.id, employee.first_name, employee.last_name, __role__.title, department.__name__ AS department, __role__.salary, employee.manager_id AS manager  
+            // db.query(`SELECT employee.id, employee.first_name, employee.last_name, __role__.title, department.__name__ AS department, __role__.salary, employee.manager_id AS manager  
+            // FROM department, __role__
+            // JOIN employee
+            // ON employee.role_id = __role__.id;`, (err, results) => console.log(table.getTable(results)));
+            con.promise().query(`SELECT employee.id, employee.first_name, employee.last_name, __role__.title, department.__name__ AS department, __role__.salary, employee.manager_id AS manager  
             FROM department, __role__
             JOIN employee
-            ON employee.role_id = __role__.id;`, (err, results) => console.log(table.getTable(results)));
+            ON employee.role_id = __role__.id;`).then(
+                ([results]) => console.log(table.getTable(results)))
+                .catch(console.log())
+                .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
         } else if (data.optionSelect === "Add Department"){
-            
+            addDepartment();
         } else if (data.optionSelect === "Add Role"){
             
         } else if (data.optionSelect === "Add Employee"){
@@ -55,6 +80,22 @@ function select() {
     // .then(select());
     
     
+}
+
+function addDepartment() {
+
+    inquirer
+    .prompt([
+        {
+            type: "input",
+            name: "addDepartment",
+            message: questions[1],
+        },
+    ])
+    .then(function (data) {
+        db.query(`INSERT INTO department (__name__)
+        VALUES (?);`, data, (err, results) => console.log(results));
+    })
 }
 
 
