@@ -147,9 +147,13 @@ function questionRole(departments) {
         // db.query(`INSERT INTO department (__name__)
         // VALUES (?);`, data, (err, results) => console.log(results));
         console.log(departments);
-        console.log(Number(data.addSalary));
-        con.promise().query(`INSERT INTO __role__ (title, salary, department_id)
-            VALUES (?, ?, ?);`, data.addRole, Number(data.addSalary), data.assignDepartment)
+        if (data.assignDepartment === departments[2]) {
+            data.assignDepartment = 3;
+            data.addSalary = Number(data.addSalary)
+        }
+        console.log(data.addSalary);
+        console.log(data.assignDepartment);
+        con.promise().query(`INSERT INTO __role__ (title, salary, department_id) VALUES (?, ?, ?);`, [data.addRole, data.addSalary, data.assignDepartment])
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
