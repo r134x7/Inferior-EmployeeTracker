@@ -12,9 +12,46 @@ const db = mysql.createConnection(
     console.log(`Connected to the company_db database.`)
   );
 
+  const questions = ["Select an option.",];
+
+function select() {
+    
+    inquirer
+    .prompt([
+        {
+            type: "list",
+            name: "optionSelect",
+            message: questions[0],
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add Department', 'Add Role', 'Add Employee', 'Exit',],
+        },
+    ])
+    .then(function (data) {
+        
+        if (data.optionSelect === "View All Departments"){
+
+        } else if (data.optionSelect === "View All Roles"){
+
+        } else if (data.optionSelect === "View All Employees"){
+            
+        } else if (data.optionSelect === "Add Department"){
+            
+        } else if (data.optionSelect === "Add Role"){
+            
+        } else if (data.optionSelect === "Add Employee"){
+            
+        } else {
+            return
+        }
+    })
+    
+    
+}
 
 
-// inquirer file needed 
+
+select();
+
+    // inquirer file needed 
 // inquirer questions will be list selection that does sql functions.
 // view all departments = show * from departments table
 // view all roles = show * from roles table
