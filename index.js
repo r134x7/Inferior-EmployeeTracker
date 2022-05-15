@@ -146,12 +146,15 @@ function questionRole(departments) {
     .then(function (data) {
         // db.query(`INSERT INTO department (__name__)
         // VALUES (?);`, data, (err, results) => console.log(results));
-        console.log(departments);
-        if (data.assignDepartment === departments[2]) {
-            data.assignDepartment = 3;
-            data.addSalary = Number(data.addSalary)
-        }
-        console.log(data.addSalary);
+        // console.log(departments);
+        // if (data.assignDepartment === departments[2]) {
+        //     data.assignDepartment = 3;
+        //     data.addSalary = Number(data.addSalary)
+        // }
+        // console.log(data.addSalary);
+        // console.log(data.assignDepartment);
+        console.log(data.assignDepartment);
+        data.assignDepartment = departments.indexOf(data.assignDepartment) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
         console.log(data.assignDepartment);
         con.promise().query(`INSERT INTO __role__ (title, salary, department_id) VALUES (?, ?, ?);`, [data.addRole, data.addSalary, data.assignDepartment])
             .catch(console.log())
