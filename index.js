@@ -10,9 +10,11 @@ const con = mysql.createConnection(
         database: 'company_db'
     },
     console.log(`
-    INFERIOR
-    EMPLOYEE
-    TRACKER
+    ------------
+    | INFERIOR |
+    | EMPLOYEE |
+    | TRACKER  |
+    ------------
     `)
     );
         
@@ -165,20 +167,25 @@ function questionRole(departments) {
 
 function addEmployee() {
 
-    con.query(`SELECT __role__.title AS title, employee.first_name, employee.last_name
-    FROM __role__
-    JOIN employee
-    ON employee.role_id = __role__.id;`, 
+    con.query(`SELECT __role__.title FROM __role__;`, 
         function (err, results) {
         const x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
-            console.log(x);
-        const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
-            console.log(y);
-        
-        y.push("No one")        
+            console.log(x);        
+            // could not use previous method of search role and employee name at same time as added employees also duplicated roles since it was listing by id.
+    return getManagers(x);
+    });
 
-    return questionEmployee(x, y);
-});
+    function getManagers(x) {
+
+        con.query(`SELECT first_name, last_name FROM employee;`, 
+            function (err, results) {
+            const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+            console.log(y);
+            
+            y.push("No one")        
+
+        return questionEmployee(x, y);
+        })
 
 function questionEmployee(title, manager_name) {
 
@@ -224,6 +231,7 @@ function questionEmployee(title, manager_name) {
         .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
 
+}
 }
 }
 
