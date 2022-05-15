@@ -26,7 +26,9 @@ const con = mysql.createConnection(
   "What is the employee's first name?", 
   "What is the employee's last name?", 
   "Assign which role?", 
-  "Assign which manager?"];
+  "Assign which manager?",
+  "Select an employee to update their role.",
+  "Assign a new role."];
 
 function select() {
     
@@ -36,7 +38,7 @@ function select() {
             type: "list",
             name: "optionSelect",
             message: questions[0],
-            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add Department', 'Add Role', 'Add Employee', 'Exit',],
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role','Exit',],
         },
     ])
     .then(function (data) {
@@ -85,6 +87,8 @@ function select() {
             addRole();
         } else if (data.optionSelect === "Add Employee"){
             addEmployee();
+        } else if (data.optionSelect === "Update Employee Role"){
+            updateEmployeeRole();
         } else {
             return
         }
@@ -211,7 +215,7 @@ function questionEmployee(title, manager_name) {
             type: "list",
             name: "assignManager",
             message: questions[8],
-            choices: manager_name // have to figure out how to get the managers...
+            choices: manager_name
         },
     ])
     .then(function (data) {
@@ -231,8 +235,70 @@ function questionEmployee(title, manager_name) {
         .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
 
+  }
+ }
 }
-}
+
+function updateEmployeeRole() {
+
+    con.query(`SELECT first_name, last_name FROM employee;`, 
+        function (err, results) {
+        const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+        
+        console.log(y);
+        
+        // y.push("No one")        
+
+    return getRoles(y);
+    })
+
+    function getRoles(employees) {
+        
+        con.query(`SELECT __role__.title FROM __role__;`, 
+            function (err, results) {
+            const x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+                console.log(x);        
+                // could not use previous method of search role and employee name at same time as added employees also duplicated roles since it was listing by id.
+
+        return updateRoleQuestions(employees, x);
+        });
+    }
+    
+    function updateRoleQuestions(employees, title) {
+        
+        inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "selectEmployee",
+                message: questions[9],
+                choices: employees 
+            },
+            {
+                type: "list",
+                name: "assignRole",
+                message: questions[10],
+                choices: title
+            },
+        ])
+        .then(function (data) {
+            console.log(data.assignRole);
+            console.log(data.selectEmployee);
+            data.assignRole = title.indexOf(data.assignRole) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+
+            data.selectEmployee = employees.indexOf(data.selectEmployee) + 1
+            
+            console.log(data.assignRole);
+            console.log(data.selectEmployee);
+    
+            con.promise().query(`UPDATE employee
+            SET role_id = ?
+            WHERE employee.id = ?;`, [data.assignRole, data.selectEmployee])
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+        })
+    } 
+
 }
 
 select();
