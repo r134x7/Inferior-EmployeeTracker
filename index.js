@@ -117,7 +117,7 @@ function addRole() {
 
 con.query(`SELECT __name__ AS department FROM department`, 
 function (err, results) {
-    var x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+    const x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
 
     return questionRole(x);
 });    
@@ -170,11 +170,12 @@ function addEmployee() {
     JOIN employee
     ON employee.role_id = __role__.id;`, 
         function (err, results) {
-        var x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+        const x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
             console.log(x);
-        var y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+        const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
             console.log(y);
         
+        y.push("No one")        
 
     return questionEmployee(x, y);
 });
@@ -207,12 +208,20 @@ function questionEmployee(title, manager_name) {
         },
     ])
     .then(function (data) {
-        // db.query(`INSERT INTO department (__name__)
-        // VALUES (?);`, data, (err, results) => console.log(results));
-        con.promise().query(`INSERT INTO department (__name__)
-            VALUES (?);`, data.addDepartment)
-            .catch(console.log())
-            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+        console.log(data.assignRole);
+        console.log(data.assignManager);
+        data.assignRole = title.indexOf(data.assignRole) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+        if (data.assignManager !== "No one") {
+            data.assignManager = manager_name.indexOf(data.assignManager) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+        } else {
+            data.assignManager = null; // it's funny that null needed to be spelled lowercase for it to work.
+        }
+        console.log(data.assignRole);
+        console.log(data.assignManager);
+
+        con.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`, [data.firstName, data.lastName, data.assignRole, data.assignManager])
+        .catch(console.log())
+        .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
 
 }
