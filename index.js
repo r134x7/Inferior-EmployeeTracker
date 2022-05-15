@@ -82,7 +82,7 @@ function select() {
         } else if (data.optionSelect === "Add Role"){
             addRole();
         } else if (data.optionSelect === "Add Employee"){
-            
+            addEmployee();
         } else {
             return
         }
@@ -164,6 +164,23 @@ function questionRole(departments) {
 }
 
 function addEmployee() {
+
+    con.query(`SELECT __role__.title AS title, employee.first_name, employee.last_name
+    FROM __role__
+    JOIN employee
+    ON employee.role_id = __role__.id;`, 
+        function (err, results) {
+        var x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+            console.log(x);
+        var y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+            console.log(y);
+        
+
+    return questionEmployee(x, y);
+});
+
+function questionEmployee(title, manager_name) {
+
     inquirer
     .prompt([
         {
@@ -177,16 +194,16 @@ function addEmployee() {
             message: questions[6],
         },
         {
-            type: "List",
+            type: "list",
             name: "assignRole",
             message: questions[7],
-            choices: [] // have to figure out how to get the roles...
+            choices: title 
         },
         {
-            type: "List",
-            name: "assignRole",
+            type: "list",
+            name: "assignManager",
             message: questions[8],
-            choices: [] // have to figure out how to get the managers...
+            choices: manager_name // have to figure out how to get the managers...
         },
     ])
     .then(function (data) {
@@ -197,6 +214,8 @@ function addEmployee() {
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
+
+}
 }
 
 select();
