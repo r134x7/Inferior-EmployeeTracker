@@ -28,7 +28,10 @@ const con = mysql.createConnection(
   "Assign which role?", 
   "Assign which manager?",
   "Select an employee to update their role.",
-  "Assign a new role."];
+  "Assign a new role.",
+  "Select an employee to update their manager",
+  "Assign a new manager",
+  ];
 
 function select() {
     
@@ -38,7 +41,7 @@ function select() {
             type: "list",
             name: "optionSelect",
             message: questions[0],
-            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role','Exit',],
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', "Update Employee's Manager",'Exit',],
         },
     ])
     .then(function (data) {
@@ -89,6 +92,8 @@ function select() {
             addEmployee();
         } else if (data.optionSelect === "Update Employee Role"){
             updateEmployeeRole();
+        } else if (data.optionSelect === "Update Employee's Manager"){
+            updateEmployeeManager();
         } else {
             return
         }
@@ -294,6 +299,74 @@ function updateEmployeeRole() {
             con.promise().query(`UPDATE employee
             SET role_id = ?
             WHERE employee.id = ?;`, [data.assignRole, data.selectEmployee])
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+        })
+    } 
+
+}
+
+function updateEmployeeManager() {
+
+    con.query(`SELECT first_name, last_name FROM employee;`, 
+        function (err, results) {
+        const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+        
+        console.log(y);
+        
+        // y.push("No one")        
+
+    return assignDifferentManager(y);
+    })
+
+    function assignDifferentManager(employee) {
+        
+        con.query(`SELECT first_name, last_name FROM employee;`, 
+        function (err, results) {
+        const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+        
+        console.log(y);
+        
+        y.push("No one")        
+
+        return updateEmployeeManagerQuestions(employee, y);
+        });
+    }
+    
+    function updateEmployeeManagerQuestions(employees, manager) {
+        
+        inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "selectEmployee",
+                message: questions[11],
+                choices: employees 
+            },
+            {
+                type: "list",
+                name: "assignManager",
+                message: questions[12],
+                choices: manager
+            },
+        ])
+        .then(function (data) {
+            console.log(data.selectEmployee);
+            console.log(data.assignManager);
+            data.selectEmployee = employees.indexOf(data.selectEmployee) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+
+            if (data.assignManager !== "No one") {
+                data.assignManager = manager.indexOf(data.assignManager) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+            } else {
+                data.assignManager = null; // it's funny that null needed to be spelled lowercase for it to work.
+            }
+            
+            console.log(data.selectEmployee);
+            console.log(data.assignManager);
+    
+            con.promise().query(`UPDATE employee
+            SET manager_id = ?
+            WHERE employee.id = ?;`, [data.assignManager, data.selectEmployee])
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
         })
