@@ -77,10 +77,19 @@ function select() {
             // FROM department, __role__
             // JOIN employee
             // ON employee.role_id = __role__.id;`, (err, results) => console.log(table.getTable(results)));
-            con.promise().query(`SELECT employee.id, employee.first_name, employee.last_name, __role__.title, department.__name__ AS department, __role__.salary, employee.manager_id AS manager  
-            FROM department, __role__
-            JOIN employee
-            ON employee.role_id = __role__.id;`).then(
+            con.promise().query(`SELECT 
+            employee.id, 
+            employee.first_name, 
+            employee.last_name, 
+            __role__.title, 
+            department.__name__ AS department, 
+            __role__.salary, 
+            employee.manager_id AS manager  
+            FROM employee
+            JOIN __role__
+            ON employee.role_id = __role__.id
+            JOIN department
+            ON __role__.department_id = department.id;`).then(
                 ([results]) => console.log(table.getTable(results)))
                 .catch(console.log())
                 .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
