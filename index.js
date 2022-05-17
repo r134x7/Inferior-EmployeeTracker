@@ -356,16 +356,25 @@ function updateEmployeeManager() {
 
 function viewEmployeeManagers() {
 
-    con.query(`SELECT first_name, last_name FROM employee;`, 
+    con.query(`SELECT 
+    employee.id,
+    employee.first_name, 
+    employee.last_name 
+    FROM employee
+    WHERE manager_id is null;`, 
         function (err, results) {
         const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
         
         console.log(y);
 
-    return questionEmployeeManagers(y);
+        const x = results.map (({id}) => id)
+
+        console.log(x);
+
+    return questionEmployeeManagers(y, x);
     })
 
-    function questionEmployeeManagers(managerName) {
+    function questionEmployeeManagers(managerName, managerId) {
         
     inquirer
     .prompt([
@@ -378,7 +387,8 @@ function viewEmployeeManagers() {
     ])
     .then (function (data) {
 
-        data.selectManager = managerName.indexOf(data.selectManager) + 1
+        data.selectManager = managerName.indexOf(data.selectManager)
+        managerId = managerId[data.selectManager]
 
         con.promise().query(`SELECT 
         employee.id, 
@@ -393,7 +403,7 @@ function viewEmployeeManagers() {
         ON employee.role_id = __role__.id
         JOIN department
         ON __role__.department_id = department.id
-        WHERE manager_id = ?;`, data.selectManager).then(
+        WHERE manager_id = ?;`, managerId).then(
             ([results]) => console.log(table.getTable(results)))
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
