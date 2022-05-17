@@ -231,7 +231,7 @@ function questionEmployee(title, id, manager_name, employee_id) {
             data.assignManager = manager_name.indexOf(data.assignManager) // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
             employee_id = employee_id[data.assignManager]
         } else {
-            data.assignManager = null; // it's funny that null needed to be spelled lowercase for it to work.
+            employee_id = null; // it's funny that null needed to be spelled lowercase for it to work.
         }
 
         con.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`, [data.firstName, data.lastName, id, employee_id])
@@ -307,30 +307,30 @@ function updateEmployeeRole() {
 
 function updateEmployeeManager() {
 
-    con.query(`SELECT first_name, last_name FROM employee;`, 
+    con.query(`SELECT id, first_name, last_name FROM employee;`, 
         function (err, results) {
         const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
         
-        console.log(y);
+        const x = results.map (({id}) => id)
 
-    return assignDifferentManager(y);
+    return assignDifferentManager(y, x);
     })
 
-    function assignDifferentManager(employee) {
+    function assignDifferentManager(employee, employee_id) {
         
-        con.query(`SELECT first_name, last_name FROM employee;`, 
+        con.query(`SELECT id, first_name, last_name FROM employee;`, 
         function (err, results) {
         const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
         
-        console.log(y);
-        
         y.push("No one")        
+        
+        const x = results.map (({id}) => id)
 
-        return updateEmployeeManagerQuestions(employee, y);
+        return updateEmployeeManagerQuestions(employee, employee_id, y, x);
         });
     }
     
-    function updateEmployeeManagerQuestions(employees, manager) {
+    function updateEmployeeManagerQuestions(employees, employee_id, manager, manager_id) {
         
         inquirer
         .prompt([
@@ -348,22 +348,21 @@ function updateEmployeeManager() {
             },
         ])
         .then(function (data) {
-            console.log(data.selectEmployee);
-            console.log(data.assignManager);
-            data.selectEmployee = employees.indexOf(data.selectEmployee) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+
+            data.selectEmployee = employees.indexOf(data.selectEmployee) // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+            employee_id = employee_id[data.selectEmployee]
 
             if (data.assignManager !== "No one") {
-                data.assignManager = manager.indexOf(data.assignManager) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+                data.assignManager = manager.indexOf(data.assignManager) // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+                manager_id = manager_id[data.assignManager]
+
             } else {
-                data.assignManager = null; // it's funny that null needed to be spelled lowercase for it to work.
+                manager_id = null; // it's funny that null needed to be spelled lowercase for it to work.
             }
-            
-            console.log(data.selectEmployee);
-            console.log(data.assignManager);
     
             con.promise().query(`UPDATE employee
             SET manager_id = ?
-            WHERE employee.id = ?;`, [data.assignManager, data.selectEmployee])
+            WHERE employee.id = ?;`, [manager_id, employee_id])
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
         })
@@ -381,12 +380,8 @@ function viewEmployeeManagers() {
     WHERE manager_id is null;`, 
         function (err, results) {
         const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
-        
-        console.log(y);
 
         const x = results.map (({id}) => id)
-
-        console.log(x);
 
     return questionEmployeeManagers(y, x);
     })
@@ -430,14 +425,16 @@ function viewEmployeeManagers() {
 
 function viewEmployeeDepartments() {
 
-        con.query(`SELECT __name__ AS department FROM department`, 
+        con.query(`SELECT id, __name__ AS department FROM department`, 
         function (err, results) {
             const x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
-        
-            return questionEmployeeDepartments(x);
+
+            const y = results.map (({id}) => id)
+
+            return questionEmployeeDepartments(x, y);
         });    
 
-    function questionEmployeeDepartments(department) {
+    function questionEmployeeDepartments(department, id) {
         
     inquirer
     .prompt([
@@ -450,7 +447,8 @@ function viewEmployeeDepartments() {
     ])
     .then (function (data) {
 
-        data.selectDepartment = department.indexOf(data.selectDepartment) + 1
+        data.selectDepartment = department.indexOf(data.selectDepartment)
+        id = id[data.selectDepartment]
 
         con.promise().query(`SELECT 
         employee.id, 
@@ -465,7 +463,7 @@ function viewEmployeeDepartments() {
         ON employee.role_id = __role__.id
         JOIN department
         ON __role__.department_id = department.id
-        WHERE department.id = ?;`, data.selectDepartment).then(
+        WHERE department.id = ?;`, id).then(
             ([results]) => console.log(table.getTable(results)))
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
@@ -475,14 +473,16 @@ function viewEmployeeDepartments() {
 
 function viewDepartmentBudget() {
 
-    con.query(`SELECT __name__ AS department FROM department`, 
+    con.query(`SELECT id, __name__ AS department FROM department`, 
     function (err, results) {
         const x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+
+        const y = results.map (({id}) => id)
     
-        return questionDepartmentBudget(x);
+        return questionDepartmentBudget(x, y);
     });    
 
-function questionDepartmentBudget(department) {
+function questionDepartmentBudget(department, id) {
     
         inquirer
         .prompt([
@@ -495,7 +495,8 @@ function questionDepartmentBudget(department) {
         ])
         .then (function (data) {
         
-            data.viewBudget = department.indexOf(data.viewBudget) + 1
+            data.viewBudget = department.indexOf(data.viewBudget)
+            id = id[data.viewBudget]
         
             con.promise().query(`SELECT 
             COUNT(employee.id) AS employee_headcount, 
@@ -505,7 +506,7 @@ function questionDepartmentBudget(department) {
             ON employee.role_id = __role__.id
             JOIN department
             ON __role__.department_id = department.id
-            WHERE department.id = ?;`, data.viewBudget).then(
+            WHERE department.id = ?;`, id).then(
                 ([results]) => console.log(table.getTable(results)))
                 .catch(console.log())
                 .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
