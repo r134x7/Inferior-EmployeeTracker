@@ -580,7 +580,38 @@ function removeRole() {
 }
 
 function removeEmployee() {
-    
+    con.query(`SELECT id, first_name, last_name FROM employee;`, 
+        function (err, results) {
+        const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+
+        const x = results.map (({id}) => id)
+
+        return questionRemoveEmployee(y, x)
+    })
+
+    function questionRemoveEmployee(name, id) {
+        
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "removeEmployee",
+                message: questions[17],
+                choices: name
+            },
+        ])
+    .then(function (data) {
+
+        data.removeEmployee = name.indexOf(data.removeEmployee)
+        id = id[data.removeEmployee]
+
+        con.promise().query(`DELETE 
+        FROM employee
+        WHERE employee.id = ?;`, id)
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+    })
+  } 
 }
 
 select();

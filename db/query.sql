@@ -57,5 +57,5 @@ ON __role__.department_id = department.id;
 -- FROM department;
 
 
-SELECT __role__.id, __role__.title
-FROM __role__;
+SELECT employee.id, employee.title
+FROM employee;
