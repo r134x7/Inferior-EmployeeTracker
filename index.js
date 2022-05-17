@@ -31,6 +31,8 @@ const con = mysql.createConnection(
   "Assign a new role.",
   "Select an employee to update their manager",
   "Assign a new manager",
+  "Select a Manager",
+  "Select a Department",
   ];
 
 function select() {
@@ -41,30 +43,17 @@ function select() {
             type: "list",
             name: "optionSelect",
             message: questions[0],
-            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', "Update Employee's Manager",'Exit',],
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'View Employees by Manager', 'View Employees by Department', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', "Update Employee's Manager",'Exit',],
         },
     ])
     .then(function (data) {
         
         if (data.optionSelect === "View All Departments"){
-            // await db.query("SELECT id, __name__ AS department FROM department")
-            // db.query("SELECT id, __name__ AS department FROM department").then((err, results) => console.log(table.getTable(results))).then(select());
-            // const main = await db.query("SELECT id, __name__ AS department FROM department")
-            // console.log(table.getTable(main));
-            // select(); 
-            // con
             con.promise().query("SELECT id, __name__ AS department FROM department").then(
                 ([results]) => console.log(table.getTable(results)))
                 .catch(console.log())
                 .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
-            // () => select();
-            // select();
         } else if (data.optionSelect === "View All Roles"){
-            // db.query(`SELECT __role__.id, __role__.title, department.__name__ AS department, __role__.salary  
-            // FROM department
-            // JOIN __role__
-            // ON __role__.department_id = department.id;`, (err, results) => console.log(table.getTable(results)));
-            // con
             con.promise().query(`SELECT __role__.id, __role__.title, department.__name__ AS department, __role__.salary  
              FROM department
              JOIN __role__
@@ -73,10 +62,6 @@ function select() {
                 .catch(console.log())
                 .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
         } else if (data.optionSelect === "View All Employees"){
-            // db.query(`SELECT employee.id, employee.first_name, employee.last_name, __role__.title, department.__name__ AS department, __role__.salary, employee.manager_id AS manager  
-            // FROM department, __role__
-            // JOIN employee
-            // ON employee.role_id = __role__.id;`, (err, results) => console.log(table.getTable(results)));
             con.promise().query(`SELECT 
             employee.id, 
             employee.first_name, 
@@ -93,6 +78,10 @@ function select() {
                 ([results]) => console.log(table.getTable(results)))
                 .catch(console.log())
                 .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+        } else if (data.optionSelect === "View Employees by Manager"){
+            viewEmployeeManagers();
+        } else if (data.optionSelect === "View Employees by Department"){
+            viewEmployeeDepartments();
         } else if (data.optionSelect === "Add Department"){
             addDepartment();
         } else if (data.optionSelect === "Add Role"){
@@ -106,12 +95,7 @@ function select() {
         } else {
             return
         }
-
-        // select();
     })
-    // .then(select());
-    
-    
 }
 
 function addDepartment() {
@@ -124,8 +108,6 @@ function addDepartment() {
         },
     ])
     .then(function (data) {
-        // db.query(`INSERT INTO department (__name__)
-        // VALUES (?);`, data, (err, results) => console.log(results));
         con.promise().query(`INSERT INTO department (__name__)
             VALUES (?);`, data.addDepartment)
             .catch(console.log())
@@ -164,15 +146,6 @@ function questionRole(departments) {
         },
     ])
     .then(function (data) {
-        // db.query(`INSERT INTO department (__name__)
-        // VALUES (?);`, data, (err, results) => console.log(results));
-        // console.log(departments);
-        // if (data.assignDepartment === departments[2]) {
-        //     data.assignDepartment = 3;
-        //     data.addSalary = Number(data.addSalary)
-        // }
-        // console.log(data.addSalary);
-        // console.log(data.assignDepartment);
         console.log(data.assignDepartment);
         data.assignDepartment = departments.indexOf(data.assignDepartment) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
         console.log(data.assignDepartment);
@@ -260,8 +233,6 @@ function updateEmployeeRole() {
         const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
         
         console.log(y);
-        
-        // y.push("No one")        
 
     return getRoles(y);
     })
@@ -322,8 +293,6 @@ function updateEmployeeManager() {
         const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
         
         console.log(y);
-        
-        // y.push("No one")        
 
     return assignDifferentManager(y);
     })
@@ -383,6 +352,98 @@ function updateEmployeeManager() {
 
 }
 
+function viewEmployeeManagers() {
+
+    con.query(`SELECT first_name, last_name FROM employee;`, 
+        function (err, results) {
+        const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
+        
+        console.log(y);
+
+    return questionEmployeeManagers(y);
+    })
+
+    function questionEmployeeManagers(managerName) {
+        
+    inquirer
+    .prompt([
+        {
+            type: "list",
+            name: "selectManager",
+            message: questions[13],
+            choices: managerName
+        },
+    ])
+    .then (function (data) {
+
+        data.selectManager = managerName.indexOf(data.selectManager) + 1
+
+        con.promise().query(`SELECT 
+        employee.id, 
+        employee.first_name, 
+        employee.last_name, 
+        __role__.title, 
+        department.__name__ AS department, 
+        __role__.salary, 
+        employee.manager_id AS manager  
+        FROM employee
+        JOIN __role__
+        ON employee.role_id = __role__.id
+        JOIN department
+        ON __role__.department_id = department.id
+        WHERE manager_id = ?;`, data.selectManager).then(
+            ([results]) => console.log(table.getTable(results)))
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
+    })
+  }
+}
+
+function viewEmployeeDepartments() {
+
+        con.query(`SELECT __name__ AS department FROM department`, 
+        function (err, results) {
+            const x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+        
+            return questionEmployeeDepartments(x);
+        });    
+
+    function questionEmployeeDepartments(department) {
+        
+    inquirer
+    .prompt([
+        {
+            type: "list",
+            name: "selectDepartment",
+            message: questions[14],
+            choices: department
+        },
+    ])
+    .then (function (data) {
+
+        data.selectDepartment = department.indexOf(data.selectDepartment) + 1
+
+        con.promise().query(`SELECT 
+        employee.id, 
+        employee.first_name, 
+        employee.last_name, 
+        __role__.title, 
+        department.__name__ AS department, 
+        __role__.salary, 
+        employee.manager_id AS manager  
+        FROM employee
+        JOIN __role__
+        ON employee.role_id = __role__.id
+        JOIN department
+        ON __role__.department_id = department.id
+        WHERE department.id = ?;`, data.selectDepartment).then(
+            ([results]) => console.log(table.getTable(results)))
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
+    })
+  }
+}
+
 select();
 
     // inquirer file needed 
@@ -395,9 +456,9 @@ select();
 // when adding x inquirer has to get person to input string
 
 // bonus stuff is update employee managers:
-// view employees by manager, this probably uses...
-// view employees by department, this probably uses...
-// delete departments etc should be simple
+// view employees by manager, this probably uses... select a manager, then it list the employees under that manager
+// view employees by department, this probably uses... select a department, then it lists the employees under that department
+// delete departments etc should be simple... delete a department, delete a role, delete an employee...
 // view combined salaries of all employees in a department would use SUM()
 
 // view all roles needs to join department name to the role table, remove department id
