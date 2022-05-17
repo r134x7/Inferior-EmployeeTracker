@@ -544,7 +544,39 @@ function removeDepartment() {
 }
 
 function removeRole() {
-    
+    con.query(`SELECT __role__.id, __role__.title
+    FROM __role__;`, 
+        function (err, results) {
+        const y = results.map (({title}) => title)
+
+        const x = results.map (({id}) => id)
+
+        return questionRemoveRole(y, x)
+    })
+
+    function questionRemoveRole(title, id) {
+        
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "removeRole",
+                message: questions[16],
+                choices: title
+            },
+        ])
+    .then(function (data) {
+
+        data.removeRole = title.indexOf(data.removeRole)
+        id = id[data.removeRole]
+
+        con.promise().query(`DELETE 
+        FROM __role__
+        WHERE __role__.id = ?;`, id)
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+    })
+  }
 }
 
 function removeEmployee() {
@@ -552,21 +584,3 @@ function removeEmployee() {
 }
 
 select();
-
-    // inquirer file needed 
-// inquirer questions will be list selection that does sql functions.
-// view all departments = show * from departments table
-// view all roles = show * from roles table
-// view all employees = show * from employees table
-// add a department/role/employee = insert into x table
-// update an employee role = ...
-// when adding x inquirer has to get person to input string
-
-// bonus stuff is update employee managers:
-// view employees by manager, this probably uses... select a manager, then it list the employees under that manager
-// view employees by department, this probably uses... select a department, then it lists the employees under that department
-// delete departments etc should be simple... delete a department, delete a role, delete an employee...
-// view combined salaries of all employees in a department would use SUM()
-
-// view all roles needs to join department name to the role table, remove department id
-// view all employees needs to join both role name, salary and department name, no role id, no manager id, it needs to show manager name

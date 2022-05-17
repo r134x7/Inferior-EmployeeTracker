@@ -53,5 +53,9 @@ ON __role__.department_id = department.id;
 -- FROM employee
 -- WHERE employee.id = 1;
 
-SELECT department.__name__ AS department
-FROM department;
+-- SELECT department.__name__ AS department
+-- FROM department;
+
+
+SELECT __role__.id, __role__.title
+FROM __role__;
