@@ -128,14 +128,16 @@ function addDepartment() {
 
 function addRole() {
 
-con.query(`SELECT __name__ AS department FROM department`, 
+con.query(`SELECT id, __name__ AS department FROM department`, 
 function (err, results) {
     const x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
 
-    return questionRole(x);
+    const y = results.map (({id}) => id)
+
+    return questionRole(x, y);
 });    
 
-function questionRole(departments) {
+function questionRole(departments, id) {
     
     inquirer
     .prompt([
@@ -157,10 +159,11 @@ function questionRole(departments) {
         },
     ])
     .then(function (data) {
-        console.log(data.assignDepartment);
-        data.assignDepartment = departments.indexOf(data.assignDepartment) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
-        console.log(data.assignDepartment);
-        con.promise().query(`INSERT INTO __role__ (title, salary, department_id) VALUES (?, ?, ?);`, [data.addRole, data.addSalary, data.assignDepartment])
+
+        data.assignDepartment = departments.indexOf(data.assignDepartment) // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+        id = id[data.assignDepartment] 
+
+        con.promise().query(`INSERT INTO __role__ (title, salary, department_id) VALUES (?, ?, ?);`, [data.addRole, data.addSalary, id])
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
@@ -169,27 +172,30 @@ function questionRole(departments) {
 
 function addEmployee() {
 
-    con.query(`SELECT __role__.title FROM __role__;`, 
+    con.query(`SELECT id, __role__.title FROM __role__;`, 
         function (err, results) {
         const x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
-            console.log(x);        
-            // could not use previous method of search role and employee name at same time as added employees also duplicated roles since it was listing by id.
-    return getManagers(x);
+                
+        const y = results.map (({id}) => id)
+
+
+    return getManagers(x, y);
     });
 
-    function getManagers(x) {
+    function getManagers(x, y) {
 
-        con.query(`SELECT first_name, last_name FROM employee;`, 
+        con.query(`SELECT id, first_name, last_name FROM employee;`, 
             function (err, results) {
-            const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
-            console.log(y);
+            const z = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
             
-            y.push("No one")        
-
-        return questionEmployee(x, y);
+            z.push("No one")
+            
+            const employee_id = results.map (({id}) => id)
+            
+        return questionEmployee(x, y, z, employee_id);
         })
 
-function questionEmployee(title, manager_name) {
+function questionEmployee(title, id, manager_name, employee_id) {
 
     inquirer
     .prompt([
@@ -217,18 +223,18 @@ function questionEmployee(title, manager_name) {
         },
     ])
     .then(function (data) {
-        console.log(data.assignRole);
-        console.log(data.assignManager);
-        data.assignRole = title.indexOf(data.assignRole) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+        
+        data.assignRole = title.indexOf(data.assignRole)// returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+        id = id[data.assignRole]
+
         if (data.assignManager !== "No one") {
-            data.assignManager = manager_name.indexOf(data.assignManager) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+            data.assignManager = manager_name.indexOf(data.assignManager) // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+            employee_id = employee_id[data.assignManager]
         } else {
             data.assignManager = null; // it's funny that null needed to be spelled lowercase for it to work.
         }
-        console.log(data.assignRole);
-        console.log(data.assignManager);
 
-        con.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`, [data.firstName, data.lastName, data.assignRole, data.assignManager])
+        con.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`, [data.firstName, data.lastName, id, employee_id])
         .catch(console.log())
         .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
     })
@@ -239,28 +245,31 @@ function questionEmployee(title, manager_name) {
 
 function updateEmployeeRole() {
 
-    con.query(`SELECT first_name, last_name FROM employee;`, 
+    con.query(`SELECT id, first_name, last_name FROM employee;`, 
         function (err, results) {
         const y = results.map (({first_name, last_name}) => first_name + " " + last_name) // destructuring objects using map and then concatenating the values to make a full name array
         
-        console.log(y);
+        const x = results.map (({id}) => id)
 
-    return getRoles(y);
+    return getRoles(y, x);
     })
 
-    function getRoles(employees) {
+    function getRoles(employees, employee_id) {
         
-        con.query(`SELECT __role__.title FROM __role__;`, 
+        con.query(`SELECT id, __role__.title FROM __role__;`, 
             function (err, results) {
-            const x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
-                console.log(x);        
-                // could not use previous method of search role and employee name at same time as added employees also duplicated roles since it was listing by id.
+            const x = results.map(({title}) => title) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array       
+                
+            // could not use previous method of search role and employee name at same time as added employees also duplicated roles since it was listing by id.
 
-        return updateRoleQuestions(employees, x);
+            const y = results.map (({id}) => id)
+            
+
+        return updateRoleQuestions(employees, employee_id, x, y);
         });
     }
     
-    function updateRoleQuestions(employees, title) {
+    function updateRoleQuestions(employees, employee_id, title, title_id) {
         
         inquirer
         .prompt([
@@ -278,18 +287,17 @@ function updateEmployeeRole() {
             },
         ])
         .then(function (data) {
-            console.log(data.assignRole);
-            console.log(data.selectEmployee);
-            data.assignRole = title.indexOf(data.assignRole) + 1 // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
 
-            data.selectEmployee = employees.indexOf(data.selectEmployee) + 1
-            
-            console.log(data.assignRole);
-            console.log(data.selectEmployee);
+            data.assignRole = title.indexOf(data.assignRole) // returns the integer of the array index and add it by 1 to match the department_id correctly. source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+            title_id = title_id[data.assignRole]
+
+
+            data.selectEmployee = employees.indexOf(data.selectEmployee)
+            employee_id = employee_id[data.selectEmployee]
     
             con.promise().query(`UPDATE employee
             SET role_id = ?
-            WHERE employee.id = ?;`, [data.assignRole, data.selectEmployee])
+            WHERE employee.id = ?;`, [title_id, employee_id])
             .catch(console.log())
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
         })
