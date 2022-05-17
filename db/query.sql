@@ -21,16 +21,15 @@ FROM employee
 JOIN __role__
 ON employee.role_id = __role__.id
 JOIN department
-ON __role__.department_id = department.id
-WHERE department.id = 5;
+ON __role__.department_id = department.id;
 -- Reminder, main table used starts at FROM and then join other tables to main using JOIN, when joining multiple tables use JOIN and ON for each table used
 
-SELECT 
-employee.id,
-employee.first_name, 
-employee.last_name 
-FROM employee
-WHERE manager_id is null;
+-- SELECT 
+-- employee.id,
+-- employee.first_name, 
+-- employee.last_name 
+-- FROM employee
+-- WHERE manager_id is null;
 
 -- SELECT 
 -- COUNT(employee.id) AS employee_headcount, 
@@ -41,3 +40,18 @@ WHERE manager_id is null;
 -- JOIN department
 -- ON __role__.department_id = department.id
 -- WHERE department.id = 5;
+
+-- DELETE 
+-- FROM department
+-- WHERE department.id = 1;
+
+-- DELETE 
+-- FROM __role__
+-- WHERE __role__.id = 1;
+
+-- DELETE 
+-- FROM employee
+-- WHERE employee.id = 1;
+
+SELECT department.__name__ AS department
+FROM department;

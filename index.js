@@ -21,7 +21,7 @@ const con = mysql.createConnection(
   const questions = ["Select an option.", 
   "Name of department you want to add.", 
   "Name of role you want to add.", 
-  "Set salary for added role", 
+  "Set salary for added role.", 
   "Assign role to which department?", 
   "What is the employee's first name?", 
   "What is the employee's last name?", 
@@ -29,10 +29,13 @@ const con = mysql.createConnection(
   "Assign which manager?",
   "Select an employee to update their role.",
   "Assign a new role.",
-  "Select an employee to update their manager",
-  "Assign a new manager",
-  "Select a Manager",
-  "Select a Department",
+  "Select an employee to update their manager.",
+  "Assign a new manager.",
+  "Select a Manager.",
+  "Select a Department.",
+  "Delete a Department.",
+  "Delete a Role.",
+  "Delete an Employee.",
   ];
 
 function select() {
@@ -43,7 +46,7 @@ function select() {
             type: "list",
             name: "optionSelect",
             message: questions[0],
-            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'View Employees by Manager', 'View Employees by Department', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', "Update Employee's Manager",'View Department Budget','Exit',],
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'View Employees by Manager', 'View Employees by Department', 'View Department Budget', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', "Update Employee's Manager", 'Remove a Department', 'Remove a Role', 'Terminate an Inferior Employee','Exit',],
         },
     ])
     .then(function (data) {
@@ -94,6 +97,12 @@ function select() {
             updateEmployeeManager();
         } else if (data.optionSelect === "View Department Budget"){
             viewDepartmentBudget();
+        } else if (data.optionSelect === "Remove a Department"){
+            removeDepartment();
+        } else if (data.optionSelect === "Remove a Role"){
+            removeRole();
+        } else if (data.optionSelect === "Terminate an Inferior Employee"){
+            removeEmployee();
         } else {
             return
         }
@@ -355,7 +364,7 @@ function updateEmployeeManager() {
 }
 
 function viewEmployeeManagers() {
-
+    // 'is null' is used and not '= null' because of how mysql logic operators work...
     con.query(`SELECT 
     employee.id,
     employee.first_name, 
@@ -494,6 +503,52 @@ function questionDepartmentBudget(department) {
                 .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
         })
     }
+}
+
+function removeDepartment() {
+    con.query(`SELECT department.id, department.__name__ AS department
+    FROM department;`, 
+        function (err, results) {
+        const y = results.map (({department}) => department)
+
+        const x = results.map (({id}) => id)
+
+        return questionRemoveDepartment(y, x)
+    })
+
+    function questionRemoveDepartment(department, id) {
+        
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "removeDepartment",
+                message: questions[15],
+                choices: department
+            },
+        ])
+    .then(function (data) {
+
+        data.removeDepartment = department.indexOf(data.removeDepartment)
+        id = id[data.removeDepartment]
+
+        // data.removeDepartment = department.indexOf(data.removeDepartment) + 1
+
+        con.promise().query(`DELETE 
+        FROM department
+        WHERE department.id = ?;`, id)
+            .catch(console.log())
+            .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.
+    })
+    }
+}
+
+function removeRole() {
+    
+}
+
+function removeEmployee() {
+    
 }
 
 select();
