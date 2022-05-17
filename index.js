@@ -43,7 +43,7 @@ function select() {
             type: "list",
             name: "optionSelect",
             message: questions[0],
-            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'View Employees by Manager', 'View Employees by Department', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', "Update Employee's Manager",'Exit',],
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'View Employees by Manager', 'View Employees by Department', 'Add Department', 'Add Role', 'Add Employee', 'Update Employee Role', "Update Employee's Manager",'View Department Budget','Exit',],
         },
     ])
     .then(function (data) {
@@ -92,6 +92,8 @@ function select() {
             updateEmployeeRole();
         } else if (data.optionSelect === "Update Employee's Manager"){
             updateEmployeeManager();
+        } else if (data.optionSelect === "View Department Budget"){
+            viewDepartmentBudget();
         } else {
             return
         }
@@ -442,6 +444,46 @@ function viewEmployeeDepartments() {
             .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
     })
   }
+}
+
+function viewDepartmentBudget() {
+
+    con.query(`SELECT __name__ AS department FROM department`, 
+    function (err, results) {
+        const x = results.map(({department}) => department) // using functional/declarative programming i.e. map. To destructure the objects in the array to put only the values from the key-value pairs in an array, source: https://stackoverflow.com/questions/19590865/from-an-array-of-objects-extract-value-of-a-property-as-array
+    
+        return questionDepartmentBudget(x);
+    });    
+
+function questionDepartmentBudget(department) {
+    
+        inquirer
+        .prompt([
+            {
+                type: "list",
+                name: "viewBudget",
+                message: questions[14],
+                choices: department
+            },
+        ])
+        .then (function (data) {
+        
+            data.viewBudget = department.indexOf(data.viewBudget) + 1
+        
+            con.promise().query(`SELECT 
+            COUNT(employee.id) AS employee_headcount, 
+            SUM(__role__.salary) AS department_budget
+            FROM employee
+            JOIN __role__
+            ON employee.role_id = __role__.id
+            JOIN department
+            ON __role__.department_id = department.id
+            WHERE department.id = ?;`, data.viewBudget).then(
+                ([results]) => console.log(table.getTable(results)))
+                .catch(console.log())
+                .then(() => select()); // using con.end like in the documentation causes the connection to close which makes a mess.    
+        })
+    }
 }
 
 select();
